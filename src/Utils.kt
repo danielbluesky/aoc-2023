@@ -29,3 +29,11 @@ fun checkResult(result: String, expectedValue: String) {
     println(result)
     check(result == expectedValue)
 }
+
+fun check(result: Int) {
+    println(result)
+}
+
+fun check(result: String) {
+    println(result)
+}
