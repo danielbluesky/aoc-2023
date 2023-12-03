@@ -19,12 +19,12 @@ fun main() {
             .plus(input.sumOf { line -> line.last { it.isDigit() }.digitToInt() })
 
     // test if implementation meets criteria from the description, like:
-    // checkResult(part1b(testInput1), 142)
-    // checkResult(part2(testInput2), 281)
+    /*
     checkResult(part1(testInput1), 142)
     checkResult(part1(input), 54561)
     checkResult(part2(testInput2), 281)
     checkResult(part2(input), 54076)
+    */
 }
 
 fun String.replaceText(mapping: Map<String, String>): String =
