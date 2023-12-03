@@ -1,13 +1,20 @@
 // https://adventofcode.com/2023/day/2
 
-typealias InputMap = Map<Int, List<Pair<String, Int>>>
-typealias GameOutcome = List<Pair<String, Int>>
+typealias InputMap = Map<Int, List<Result>>
 typealias Input = List<String>
 
+enum class Color(
+    val value: String,
+) {
+    RED("red"), BLUE("blue"), GREEN("green");
+    companion object { infix fun from(value: String): Color? = Color.values().firstOrNull { it.value == value } }
+}
+data class Result(val color: Color, val number: Int)
+
 val benchmark = mapOf(
-    "red" to 12,
-    "green" to 13,
-    "blue" to 14,
+    Color.RED to 12,
+    Color.BLUE to 14,
+    Color.GREEN to 13,
 )
 
 fun main() {
@@ -20,13 +27,14 @@ fun main() {
         .calculate()
 
     fun part2(input: List<String>) = input
-        .size
+        .parse()
+        .calculate2()
 
     // test if implementation meets criteria from the description, like:
     checkResult(part1(testInput1), 8)
     checkResult(part1(input), 2447)
-    // checkResult(part2(testInput2), 0)
-    // checkResult(part2(input), 0)
+    checkResult(part2(testInput2), 2286)
+    checkResult(part2(input), 56322)
 }
 
 fun InputMap.calculate(): Int {
@@ -36,14 +44,26 @@ fun InputMap.calculate(): Int {
         .sumOf { it }
 }
 
-fun GameOutcome.isPossible(): Boolean {
-    this.map { color -> if (color.second > benchmark[color.first]!!) return false }
+fun InputMap.calculate2(): Int {
+    val finalResult = mutableListOf<Int>()
+    this.map { game ->
+        val cubes = mutableMapOf(Color.RED to 0, Color.GREEN to 0, Color.BLUE to 0)
+        game.value.map { result ->
+            if (result.number > cubes[result.color]!!) cubes.plusAssign(result.color to result.number)
+        }
+        finalResult.add(cubes[Color.RED]!! * cubes[Color.BLUE]!! * cubes[Color.GREEN]!!)
+    }
+    return finalResult.sum()
+}
+
+fun List<Result>.isPossible(): Boolean {
+    this.map { result -> if (result.number > benchmark[result.color]!!) return false }
     return true
 }
 
-fun Input.parse(): Map<Int, List<Pair<String, Int>>> {
-    val parsed = mutableMapOf<Int, List<Pair<String, Int>>>()
-    this.map { line -> parsed[line.parseGame()] = line.parseResult() }
+fun Input.parse(): Map<Int, List<Result>> {
+    val parsed = mutableMapOf<Int, List<Result>>()
+    this.map { line -> parsed.put(line.parseGame(), line.parseResult()) }
     return parsed
 }
 
@@ -52,9 +72,9 @@ fun String.parseGame(): Int = this
     .substringAfter(" ")
     .toInt()
 
-fun String.parseResult(): List<Pair<String, Int>> = this
+fun String.parseResult(): List<Result> = this
     .substringAfter(": ")
     .replace(";", ",")
     .split(",")
     .map { it.trim() }
-    .map { it -> Pair(it.substringAfter(" "), it.substringBefore(" ").toInt()) }
+    .map { it -> Result((Color from it.substringAfter(" "))!!, it.substringBefore(" ").toInt()) }
