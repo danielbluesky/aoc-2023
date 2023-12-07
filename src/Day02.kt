@@ -1,7 +1,7 @@
 // https://adventofcode.com/2023/day/2
-
 typealias InputMap = Map<Int, List<Result>>
 typealias Input = List<String>
+typealias CubeSet = Map<Color, Int>
 
 enum class Color(
     val value: String,
@@ -28,7 +28,8 @@ fun main() {
 
     fun part2(input: List<String>) = input
         .parse()
-        .calculate2()
+        .map { line -> line.cubeSet().cubePower() }
+        .sum()
 
     // test if implementation meets criteria from the description, like:
     checkResult(part1(testInput1), 8)
@@ -36,6 +37,25 @@ fun main() {
     checkResult(part2(testInput2), 2286)
     checkResult(part2(input), 56322)
 }
+
+fun Map.Entry<Int, List<Result>>.cubeSet(): CubeSet {
+    val cubes = mutableMapOf(Color.RED to 0, Color.GREEN to 0, Color.BLUE to 0)
+    this.value.map { (c, n) -> if (n > cubes[c]!!) cubes[c] = n }
+    return cubes.toMap()
+}
+
+fun InputMap.cubeSet2(): CubeSet {
+    val cubes = mutableMapOf(Color.RED to 0, Color.GREEN to 0, Color.BLUE to 0)
+    this.map { (_, v) ->
+        println(v)
+        v.map { result ->
+            if (result.number > cubes[result.color]!!) cubes[result.color] = result.number
+        }
+    }
+    println(cubes)
+    return cubes
+}
+fun CubeSet.cubePower() = this[Color.RED]!! * this[Color.BLUE]!! * this[Color.GREEN]!!
 
 fun InputMap.calculate(): Int {
     return this
