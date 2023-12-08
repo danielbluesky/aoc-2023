@@ -5,18 +5,18 @@ fun main() {
     val testInput2 = readInput("Day01_test_2")
     val input = readInput("Day01")
 
-    fun part1(input: List<String>) =
-        input.sumOf { line -> line.first { it.isDigit() }.digitToInt() }.times(10)
-            .plus(input.sumOf { line -> line.last { it.isDigit() }.digitToInt() })
-
-    fun part2(input: List<String>) = part1(input.refine())
-
-    fun part1b(input: List<String>) = input
+    fun part1(input: List<String>) = input
         .sumOf { line ->
             line.filter { it.isDigit() }.let {
                 it.first().digitToInt() * 10 + it.last().digitToInt()
             }
         }
+
+    fun part2(input: List<String>) = part1(input.refine())
+
+    fun _part1(input: List<String>) =
+        input.sumOf { line -> line.first { it.isDigit() }.digitToInt() }.times(10)
+            .plus(input.sumOf { line -> line.last { it.isDigit() }.digitToInt() })
 
     // test if implementation meets criteria from the description, like:
     // checkResult(part1b(testInput1), 142)
