@@ -2,9 +2,9 @@
 
 typealias Input = List<String>
 typealias SymbolCoords = MutableList<Pair<Int, Int>>
-typealias NumberRanges = MutableList<Quadruple>
+typealias NumberRanges = MutableList<NumberRange>
 
-data class Quadruple(val first: Int, val second: Int, val third: Int, val fourth: Int)
+data class NumberRange(val number: Int, val row: Int, val start: Int, val end: Int)
 
 fun main() {
     val testInput1 = readInput("Day03_test_1")
@@ -16,15 +16,11 @@ fun main() {
         .findPartNumbers()
         .sum()
 
-    fun part2(input: List<String>): Int {
-        val x = input
-            .parse()
-            .findGears()
-            .gearRatios()
-            .sum()
-        println(x)
-        return x
-    }
+    fun part2(input: List<String>) = input
+        .parse()
+        .findGears()
+        .gearRatios()
+        .sum()
 
     // test if implementation meets criteria from the description, like:
     checkResult(part1(testInput1), 4361)
@@ -33,6 +29,7 @@ fun main() {
     checkResult(part2(input), 81463996)
 }
 
+// parsing
 fun Input.parse(): Pair<NumberRanges, SymbolCoords> {
     val symbols: SymbolCoords = mutableListOf()
     val numbers: NumberRanges = mutableListOf()
@@ -43,17 +40,18 @@ fun Input.parse(): Pair<NumberRanges, SymbolCoords> {
         }
         val numberRegex = Regex("\\d+")
         numberRegex.findAll(line).forEach {
-            numbers.add(Quadruple(it.value.toInt(), row, it.range.first, it.range.last))
+            numbers.add(NumberRange(it.value.toInt(), row, it.range.first, it.range.last))
         }
     }
     return Pair(numbers, symbols)
 }
 
+// part 1
 fun Pair<NumberRanges, SymbolCoords>.findPartNumbers(): List<Int> {
     val partNumbers: MutableList<Int> = mutableListOf()
-    this.first.forEach { (number, line, start, end) ->
+    this.first.forEach { (number, row, start, end) ->
         if (this.second.any { (x, y) ->
-            y in (line - 1..line + 1) && x in (start - 1..end + 1)
+            y in (row - 1..row + 1) && x in (start - 1..end + 1)
         }
         ) {
             partNumbers.add(number)
@@ -62,24 +60,24 @@ fun Pair<NumberRanges, SymbolCoords>.findPartNumbers(): List<Int> {
     return partNumbers.toList()
 }
 
-fun Pair<NumberRanges, SymbolCoords>.findGears(): Map<Pair<Int, Int>, MutableList<Int>> {
-    val gears = mutableMapOf<Pair<Int, Int>, MutableList<Int>>()
+// part 2
+fun Pair<NumberRanges, SymbolCoords>.findGears(): List<List<Int>> {
+    val gears = mutableListOf<MutableList<Int>>()
     this.second.forEach { (x, y) ->
         val numbers = mutableListOf<Int>()
-        this.first.forEach { (number, line, start, end) ->
-            if (x in (start - 1..end + 1) && y in (line - 1..line + 1)) {
-                numbers.add(number)
+        this.first
+            .filter { it -> it.row in y - 1..y + 1 }
+            .forEach { (number, row, start, end) ->
+                if (x in (start - 1..end + 1) && y in (row - 1..row + 1)) { numbers.add(number) }
             }
+        if (numbers.size == 2) gears += numbers
+        if (numbers.size > 2) throw Exception("More than two adjacent numbers")
         }
-        gears[Pair(x, y)] = numbers
-        }
-    return gears.toMap()
+    return gears.toList()
 }
 
-fun Map<Pair<Int, Int>, List<Int>>.gearRatios(): List<Int> {
+fun List<List<Int>>.gearRatios(): List<Int> {
     val gearRatios = mutableListOf<Int>()
-    this.forEach {
-        if (it.value.size == 2) gearRatios.add(it.value.first() * it.value.last())
-    }
+    this.forEach { gearRatios.add(it.first() * it.last()) }
     return gearRatios.toList()
 }
