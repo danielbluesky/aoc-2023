@@ -1,5 +1,5 @@
 // https://adventofcode.com/2023/day/3
-
+/*
 typealias Input = List<String>
 typealias Symbols = MutableList<Pair<Int, Int>>
 typealias Numbers = MutableList<NumberRange>
@@ -74,3 +74,4 @@ fun Pair<Numbers, Symbols>.findGears(): List<List<Int>> {
 }
 
 fun List<List<Int>>.gearRatios(): List<Int> = map { (it.first() * it.last()) }
+*/
