@@ -1,5 +1,5 @@
 // https://adventofcode.com/2023/day/1
-
+/*
 fun main() {
     val testInput1 = readInput("Day01_test_1")
     val testInput2 = readInput("Day01_test_2")
@@ -58,3 +58,4 @@ val mappingRules = mapOf(
     "eight" to "ei8ht",
     "nine" to "n9ne",
 )
+*/
