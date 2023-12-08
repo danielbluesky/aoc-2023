@@ -14,6 +14,7 @@ fun main() {
 
     fun part2(input: List<String>) = part1(input.refine())
 
+    // sub-optimal, as run through input twice
     fun _part1(input: List<String>) =
         input.sumOf { line -> line.first { it.isDigit() }.digitToInt() }.times(10)
             .plus(input.sumOf { line -> line.last { it.isDigit() }.digitToInt() })

@@ -38,49 +38,7 @@ fun main() {
     checkResult(part2(input), 56322)
 }
 
-fun Map.Entry<Int, List<Result>>.cubeSet(): CubeSet {
-    val cubes = mutableMapOf(Color.RED to 0, Color.GREEN to 0, Color.BLUE to 0)
-    this.value.map { (c, n) -> if (n > cubes[c]!!) cubes[c] = n }
-    return cubes.toMap()
-}
-
-fun InputMap.cubeSet2(): CubeSet {
-    val cubes = mutableMapOf(Color.RED to 0, Color.GREEN to 0, Color.BLUE to 0)
-    this.map { (_, v) ->
-        println(v)
-        v.map { result ->
-            if (result.number > cubes[result.color]!!) cubes[result.color] = result.number
-        }
-    }
-    println(cubes)
-    return cubes
-}
-fun CubeSet.cubePower() = this[Color.RED]!! * this[Color.BLUE]!! * this[Color.GREEN]!!
-
-fun InputMap.calculate(): Int {
-    return this
-        .entries
-        .map { game -> if (game.value.isPossible()) game.key else 0 }
-        .sumOf { it }
-}
-
-fun InputMap.calculate2(): Int {
-    val finalResult = mutableListOf<Int>()
-    this.map { game ->
-        val cubes = mutableMapOf(Color.RED to 0, Color.GREEN to 0, Color.BLUE to 0)
-        game.value.map { result ->
-            if (result.number > cubes[result.color]!!) cubes.plusAssign(result.color to result.number)
-        }
-        finalResult.add(cubes[Color.RED]!! * cubes[Color.BLUE]!! * cubes[Color.GREEN]!!)
-    }
-    return finalResult.sum()
-}
-
-fun List<Result>.isPossible(): Boolean {
-    this.map { result -> if (result.number > benchmark[result.color]!!) return false }
-    return true
-}
-
+// parsing
 fun Input.parse(): Map<Int, List<Result>> {
     val parsed = mutableMapOf<Int, List<Result>>()
     this.map { line -> parsed.put(line.parseGame(), line.parseResult()) }
@@ -98,3 +56,52 @@ fun String.parseResult(): List<Result> = this
     .split(",")
     .map { it.trim() }
     .map { it -> Result((Color from it.substringAfter(" "))!!, it.substringBefore(" ").toInt()) }
+
+// part 1
+fun InputMap.calculate(): Int {
+    return this
+        .entries
+        .map { game -> if (game.value.isPossible()) game.key else 0 }
+        .sumOf { it }
+}
+
+fun List<Result>.isPossible(): Boolean {
+    this.map { result -> if (result.number > benchmark[result.color]!!) return false }
+    return true
+}
+
+// part 2
+fun Map.Entry<Int, List<Result>>.cubeSet(): CubeSet {
+    val cubes = mutableMapOf(Color.RED to 0, Color.GREEN to 0, Color.BLUE to 0)
+    this.value.map { (c, n) -> if (n > cubes[c]!!) cubes[c] = n }
+    return cubes.toMap()
+}
+
+fun CubeSet.cubePower() = this[Color.RED]!! * this[Color.BLUE]!! * this[Color.GREEN]!!
+
+// replaced stuff
+/*
+fun InputMap._cubeSet2(): CubeSet {
+    val cubes = mutableMapOf(Color.RED to 0, Color.GREEN to 0, Color.BLUE to 0)
+    this.map { (_, v) ->
+        println(v)
+        v.map { result ->
+            if (result.number > cubes[result.color]!!) cubes[result.color] = result.number
+        }
+    }
+    println(cubes)
+    return cubes
+}
+
+fun InputMap._calculate2(): Int {
+    val finalResult = mutableListOf<Int>()
+    this.map { game ->
+        val cubes = mutableMapOf(Color.RED to 0, Color.GREEN to 0, Color.BLUE to 0)
+        game.value.map { result ->
+            if (result.number > cubes[result.color]!!) cubes.plusAssign(result.color to result.number)
+        }
+        finalResult.add(cubes[Color.RED]!! * cubes[Color.BLUE]!! * cubes[Color.GREEN]!!)
+    }
+    return finalResult.sum()
+}
+*/
