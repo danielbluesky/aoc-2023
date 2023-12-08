@@ -14,17 +14,18 @@ fun main() {
 
     fun part2(input: List<String>) = part1(input.refine())
 
+    // sub-optimal, as run through input twice
     fun _part1(input: List<String>) =
         input.sumOf { line -> line.first { it.isDigit() }.digitToInt() }.times(10)
             .plus(input.sumOf { line -> line.last { it.isDigit() }.digitToInt() })
 
     // test if implementation meets criteria from the description, like:
-    // checkResult(part1b(testInput1), 142)
-    // checkResult(part2(testInput2), 281)
+    /*
     checkResult(part1(testInput1), 142)
     checkResult(part1(input), 54561)
     checkResult(part2(testInput2), 281)
     checkResult(part2(input), 54076)
+    */
 }
 
 fun String.replaceText(mapping: Map<String, String>): String =
