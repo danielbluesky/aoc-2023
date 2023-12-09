@@ -8,7 +8,7 @@ fun main() {
 
     fun part1(input: List<String>) = input
         .parse()
-        .map { sets -> sets[0].intersect(sets[1]) }
+        .map { sets -> sets.first.intersect(sets.second) }
         .filter { set -> set.isNotEmpty() }
         .sumOf { set -> 2.toDouble().pow(set.size - 1) }
         .toInt()
@@ -37,3 +37,4 @@ fun List<String>.parse() = this
             .toSet()
         }
     }
+    .map { Pair(it[0], it[1]) }
