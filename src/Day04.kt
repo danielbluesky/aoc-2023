@@ -1,10 +1,8 @@
 // https://adventofcode.com/2023/day/4
 import kotlin.math.pow
 
-typealias Card = Int
-typealias Sets = Triple<Int, Set<Int>, Set<Int>>
-
-data class Results(val analysedCard: Int, val cardInstances: Int, val matches: Int)
+data class Deck(val currentInstances: Int, val myNumbers: Set<Int>, val benchmark: Set<Int>)
+data class Result(val wonInstances: Int, val deckUpdates: Int)
 
 fun main() {
     val testInput1 = readInput("Day04_test_1")
@@ -12,29 +10,16 @@ fun main() {
     val input = readInput("Day04")
 
     fun part1(input: List<String>) = input
-        .parse()
+        .parse1()
         .map { sets -> sets.first.intersect(sets.second) }
         .filter { set -> set.isNotEmpty() }
         .sumOf { set -> 2.toDouble().pow(set.size - 1) }
         .toInt()
 
-    fun part2(input: List<String>): Int {
-        input
-            .parse2()
-            .let { it ->
-                for (i in 1..it.size) { // to avoid ConcurrentModificationException
-                    val game = it.entries.first { it.key == i }
-                    val result = game.evaluate()
-                    for (j in 1..result.matches) {
-                        val nextCard = game.key + j
-                        val nextSet = it[nextCard]!!
-                        val updatedSet = Triple(nextSet.first + result.cardInstances, nextSet.second, nextSet.third)
-                        it.plusAssign(nextCard to updatedSet)
-                    }
-                }
-                return it.values.sumOf { it.first }
-            }
-    }
+    fun part2(input: List<String>) = input
+        .parse2()
+        .play()
+        .sumOf { it.currentInstances }
 
     // test if implementation meets criteria from the description, like:
     checkResult(part1(testInput1), 13)
@@ -44,51 +29,49 @@ fun main() {
 }
 
 // part 1
-fun List<String>.parse() = this
-    .map { line ->
-        line
-        .substringAfter(":")
-        .split(" | ")
-        .map { list ->
-            list
-            .trim()
-            .replace("  ", " ")
-            .split(" ")
-            .map { it.toInt() }
-            .toSet()
-        }
-    }
+fun List<String>.parse1() = this
+    .map { line -> line.substringAfter(":").split(" | ").map { it.parseSets() } }
     .map { Pair(it[0], it[1]) }
 
+fun String.parseSets() = this
+    .trim()
+    .replace("  ", " ")
+    .split(" ")
+    .map { it.toInt() }
+    .toSet()
+
 // part 2
-fun List<String>.parse2(): MutableMap<Int, Triple<Int, Set<Int>, Set<Int>>> {
-    val parsed = mutableMapOf<Card, Sets>()
-    this.map { line ->
-        line
-        val game: Card = line.substringBefore(":").substringAfter(" ").trim().toInt()
-        val sets: Sets = line
-            .substringAfter(":")
-            .split(" | ")
-            .map { list ->
-                list
-                    .trim()
-                    .replace("  ", " ")
-                    .split(" ")
-                    .map { it.toInt() }
-                    .toSet()
-            }
-            .let { Triple(1, it[0], it[1]) }
-        parsed.put(game, sets)
+fun List<String>.parse2(): MutableMap<Int, Deck> =
+    associate { line ->
+        val round = line.substringBefore(":").substringAfter(" ").trim().toInt()
+        val (firstSet, secondSet) = line.substringAfter(":").split(" | ").map { it.parseSets() }
+        round to Deck(1, firstSet, secondSet)
+    }.toMutableMap()
+
+fun MutableMap<Int, Deck>.play(): List<Deck> {
+    (1..size).map { round -> // not directly working on MutableMap to avoid ConcurrentModificationException
+        val thisRound = this.entries.first { it.key == round }
+        val result = thisRound.evaluate()
+        (1..result.deckUpdates).map { i ->
+            val nextRound = thisRound.key + i
+            val nextDeck = this[nextRound]!!
+            val updatedNextDeck = Deck((nextDeck.currentInstances + result.wonInstances), nextDeck.myNumbers, nextDeck.benchmark)
+            this.plusAssign(nextRound to updatedNextDeck)
+        }
     }
-    return parsed
+    return this.values.toList()
 }
 
-fun Map.Entry<Int, Triple<Int, Set<Int>, Set<Int>>>.evaluate() =
-    Results(
-        analysedCard = this.key,
-        cardInstances = this.value.first,
-        matches = this.value.second.intersect(this.value.third).size,
-    )
+fun Map.Entry<Int, Deck>.evaluate(): Result = Result(value.currentInstances, value.myNumbers.intersect(value.benchmark).size)
 
-fun Results.collect() {
+// replaced with support of Chat GPT
+fun List<String>._parse2(): MutableMap<Int, Deck> {
+    val parsed = mutableMapOf<Int, Deck>()
+    this.map { line ->
+        line
+        val round = line.substringBefore(":").substringAfter(" ").trim().toInt()
+        val deck: Deck = line.substringAfter(":").split(" | ").map { it.parseSets() }.let { Deck(1, it[0], it[1]) }
+        parsed.put(round, deck)
+    }
+    return parsed
 }
