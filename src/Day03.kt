@@ -1,8 +1,8 @@
 // https://adventofcode.com/2023/day/3
 
 typealias Input = List<String>
-typealias SymbolCoords = MutableList<Pair<Int, Int>>
-typealias NumberRanges = MutableList<NumberRange>
+typealias Symbols = MutableList<Pair<Int, Int>>
+typealias Numbers = MutableList<NumberRange>
 
 data class NumberRange(val number: Int, val row: Int, val start: Int, val end: Int)
 
@@ -30,11 +30,11 @@ fun main() {
 }
 
 // parsing
-fun Input.parse(): Pair<NumberRanges, SymbolCoords> {
-    val symbols: SymbolCoords = mutableListOf()
-    val numbers: NumberRanges = mutableListOf()
+fun Input.parse(): Pair<Numbers, Symbols> {
+    val symbols: Symbols = mutableListOf()
+    val numbers: Numbers = mutableListOf()
 
-    this.forEachIndexed { row, line ->
+    forEachIndexed { row, line ->
         line.forEachIndexed { col, char ->
             if (char.isDigit().not() && char != '.') symbols.add(col to row)
         }
@@ -47,25 +47,22 @@ fun Input.parse(): Pair<NumberRanges, SymbolCoords> {
 }
 
 // part 1
-fun Pair<NumberRanges, SymbolCoords>.findPartNumbers(): List<Int> {
+fun Pair<Numbers, Symbols>.findPartNumbers(): List<Int> {
     val partNumbers: MutableList<Int> = mutableListOf()
-    this.first.forEach { (number, row, start, end) ->
-        if (this.second.any { (x, y) ->
-            y in (row - 1..row + 1) && x in (start - 1..end + 1)
-        }
-        ) {
-            partNumbers.add(number)
-        }
+    first.forEach { (number, row, start, end) ->
+        second
+            .filter { (x, y) -> y in (row - 1..row + 1) && x in (start - 1..end + 1) }
+            .forEach { _ -> partNumbers.add(number) }
     }
     return partNumbers.toList()
 }
 
 // part 2
-fun Pair<NumberRanges, SymbolCoords>.findGears(): List<List<Int>> {
+fun Pair<Numbers, Symbols>.findGears(): List<List<Int>> {
     val gears = mutableListOf<MutableList<Int>>()
-    this.second.forEach { (x, y) ->
+    second.forEach { (x, y) ->
         val numbers = mutableListOf<Int>()
-        this.first
+        first
             .filter { it -> it.row in y - 1..y + 1 }
             .forEach { (number, row, start, end) ->
                 if (x in (start - 1..end + 1) && y in (row - 1..row + 1)) { numbers.add(number) }
@@ -76,8 +73,4 @@ fun Pair<NumberRanges, SymbolCoords>.findGears(): List<List<Int>> {
     return gears.toList()
 }
 
-fun List<List<Int>>.gearRatios(): List<Int> {
-    val gearRatios = mutableListOf<Int>()
-    this.forEach { gearRatios.add(it.first() * it.last()) }
-    return gearRatios.toList()
-}
+fun List<List<Int>>.gearRatios(): List<Int> = map { (it.first() * it.last()) }
