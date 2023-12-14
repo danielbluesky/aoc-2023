@@ -1,4 +1,5 @@
 // https://adventofcode.com/2023/day/2
+/*
 typealias InputMap = Map<Int, List<Result>>
 typealias Input = List<String>
 typealias CubeSet = Map<Color, Int>
@@ -104,4 +105,5 @@ fun InputMap._calculate2(): Int {
     }
     return finalResult.sum()
 }
+*/
 */
