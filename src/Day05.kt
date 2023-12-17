@@ -5,13 +5,12 @@ fun main() {
     // val testInput2 = readInput("Day05_test_2")
     val input = readInput("Day05")
 
-    fun part1(input: List<String>): Int {
-        return input
+    fun part1(input: List<String>): Int = input
+        .prepare()
         .parse()
         .locations()
         .min()
         .toInt()
-    }
 
     fun part2(input: List<String>) = input
         .size
@@ -23,24 +22,37 @@ fun main() {
     // checkResult(part2(input), 0)
 }
 
-data class Conversion(val range: Pair<Long, Long>, val offset: Long)
+typealias Input = List<List<String>>
+typealias Almanac = Pair<Set<Long>, Map<String, Set<Instruction>>>
 
-fun List<String>.parse(): Pair<Set<Long>, Map<String, Set<Conversion>>> {
-    val input = this.joinToString("\n").split("\n\n").map { it.split("\n") }
-    val seeds = input[0][0].substringAfter(" ").split(" ").map { it.toLong() }.toSet()
-    val conversions = input.drop(1).associate { inputInstructions ->
+data class Instruction(val range: Pair<Long, Long>, val offset: Long)
+
+fun List<String>.prepare() = this
+    .joinToString("\n")
+    .split("\n\n")
+    .map { it.split("\n") }
+
+fun Input.parse() = parseSeeds() to parseInstructions()
+
+fun Input.parseSeeds() = this[0][0]
+    .substringAfter(" ")
+    .split(" ")
+    .map { it.toLong() }
+    .toSet()
+
+fun Input.parseInstructions() = this
+    .drop(1)
+    .associate { inputInstructions ->
         val step = inputInstructions[0]
         val instruction = inputInstructions
             .drop(1)
             .map { it.split(" ").map { it.toLong() } }
-            .map { it -> Conversion(it[1] to it[1] + it[2] - 1, it[0] - it[1]) }
+            .map { it -> Instruction(it[1] to it[1] + it[2] - 1, it[0] - it[1]) }
             .toSet()
         step to instruction
     }
-    return seeds to conversions
-}
 
-fun Pair<Set<Long>, Map<String, Set<Conversion>>>.locations(): Set<Long> {
+fun Almanac.locations(): Set<Long> {
     val locations = mutableSetOf<Long>()
     first.map { seed ->
         var number = seed
