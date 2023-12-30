@@ -89,31 +89,44 @@ fun Almanac2.locations2(): Locations {
     val newSeeds = mutableSetOf<Seed>()
     newSeeds.plusAssign(this.first)
     this.second.map { step ->
+        // println("============================")
+        // println("round:       $step")
+        // println("seeds:       $newSeeds")
         newSeeds
         .map { seed ->
+            // println("----------------------------")
+            // println("seed:        $seed")
             step.value
                 .filter { instr -> instr.range.second >= seed.first && instr.range.first <= seed.second }
                 .forEach { instr ->
+                    // println("............................")
+                    // println("instruction: ${instr.range}")
+                    // println("offset:      ${instr.offset}")
                     toRemove += seed
+                    // println("toRemove:    $toRemove")
                     toAdd += seed.offset(instr)
+                    // println("toAdd:       $toAdd")
                 }
         }.let {
             newSeeds.apply {
                 removeAll(toRemove)
-                toRemove.clear()
                 addAll(toAdd)
+                toRemove.clear()
                 toAdd.clear()
-            }
+            }.sortedBy { it.first }
         }
     }
+    // println("............................")
+    // println("newSeeds: ${newSeeds.sortedBy { it.first }}")
     return newSeeds
 }
 
 typealias Seed = Pair<Long, Long>
 typealias Locations = Set<Pair<Long, Long>>
 
-fun Seed.offset(i: Instruction): Set<Pair<Long, Long>> =
+fun Seed.offset(i: Instruction): Locations =
     setOf(
+        // if (this.first < i.range.first) this.first to i.range.first - 1 else 10000000000L to 10000000000L,
         maxOf(i.range.first + i.offset, this.first + i.offset) to
         minOf(i.range.second + i.offset, this.second + i.offset),
     )
