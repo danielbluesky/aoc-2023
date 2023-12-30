@@ -82,114 +82,40 @@ fun Input.parseSeeds2() = this[0][0]
     .map { it[0] to it[0] + it[1] - 1 }
     .sortedBy { it.first }
     .toSet()
-fun Almanac2.locations2(): Set<Pair<Long, Long>> {
-    val toAdd = mutableSetOf<Pair<Long, Long>>()
-    val toRemove = mutableSetOf<Pair<Long, Long>>()
-    val newSeeds = mutableSetOf<Pair<Long, Long>>()
+
+fun Almanac2.locations2(): Locations {
+    val toAdd = mutableSetOf<Seed>()
+    val toRemove = mutableSetOf<Seed>()
+    val newSeeds = mutableSetOf<Seed>()
     newSeeds.plusAssign(this.first)
     this.second.map { step ->
-        println("loop 1: this is step ${step.key} with comparison range instructions ${step.value}")
-        println("  seed ranges: $newSeeds")
-        newSeeds.map { seed ->
-            println("    loop 2: analyse the following seed range: $seed")
-            step.value.map { instr ->
-                if ((instr.range.second < seed.first || instr.range.first > seed.second).not()) {
-                    toRemove.plusAssign(seed)
-                    toAdd.plusAssign(seed.split(instr))
+        newSeeds
+        .map { seed ->
+            step.value
+                .filter { instr -> instr.range.second >= seed.first && instr.range.first <= seed.second }
+                .forEach { instr ->
+                    toRemove += seed
+                    toAdd += seed.offset(instr)
                 }
+        }.let {
+            newSeeds.apply {
+                removeAll(toRemove)
+                toRemove.clear()
+                addAll(toAdd)
+                toAdd.clear()
             }
         }
-        println("    loop 2: wrap up...")
-        newSeeds.removeAll(toRemove)
-        println("    - toRemove: $toRemove")
-        newSeeds.addAll(toAdd)
-        newSeeds.sortedBy { it.first }
-        println("    - toAdd   : $toAdd")
-        toRemove.clear()
-        toAdd.clear()
     }
-    println("----------------------------")
-    println("final set of seeds: $newSeeds")
     return newSeeds
 }
 
-fun Pair<Long, Long>.split(instruction: Instruction?): Set<Pair<Long, Long>> {
-    if (instruction != null) {
-        val seed = this
-        val range = instruction.range
-        val offset = instruction.offset
-        println("      split the seed ranges")
-        println("      - seed  : $seed")
-        println("      - range : $range")
-        println("      - offset: $offset")
-        println("      - analyse type...")
-        val seedIsEnclosed = range.first <= this.first && range.second >= this.second
-        val seedOverlapsLeft = range.first <= this.first && range.second > this.first && range.second < this.second
-        val seedOverlapsRight = range.second > this.second && range.first <= this.second && range.first > this.first
-        val seedIsEnclosing = range.first > this.first && range.second < this.second
+typealias Seed = Pair<Long, Long>
+typealias Locations = Set<Pair<Long, Long>>
 
-        if (seedIsEnclosed) {
-            val overlap = Pair(seed.first + offset, seed.second + offset)
-            val result = setOf(overlap)
-            println("        - seedIsEnclosed: $seedIsEnclosed")
-            println("        - result after offset: $result")
-            return result
-        }
-        if (seedOverlapsLeft) {
-            val overlap = Pair(seed.first + offset, range.second + offset)
-            // val outsideRight = Pair(range.second + 1, seed.second)
-            // val result = setOf(overlap, outsideRight)
-            val result = setOf(overlap)
-            println("        - seedOverlapsLeft: $seedOverlapsLeft")
-            println("        - result after offset: $result")
-            return result
-        }
-        if (seedOverlapsRight) {
-            // val outsideLeft = Pair(seed.first, range.first - 1)
-            val overlap = Pair(range.first + offset, seed.second + offset)
-            // val result = setOf(outsideLeft, overlap)
-            val result = setOf(overlap)
-            println("        - seedOverlapsRight: $seedOverlapsRight")
-            println("        - result after offset: $result")
-            return result
-        }
-        if (seedIsEnclosing) {
-            // val outsideLeft = Pair(seed.first, range.first - 1)
-            val overlap = Pair(range.first + offset, range.second + offset)
-            // val outsideRight = Pair(range.second + 1, seed.second)
-            // val result = setOf(outsideLeft, overlap, outsideRight)
-            val result = setOf(overlap)
-            println("        - seedIsEnclosing: $seedIsEnclosing")
-            println("        - result after offset: $result")
-            return result
-        }
-    }
-    println("        - unchanged set: ${setOf(this)}")
-    return setOf(this) // no split
-}
+fun Seed.offset(i: Instruction): Set<Pair<Long, Long>> =
+    setOf(
+        maxOf(i.range.first + i.offset, this.first + i.offset) to
+        minOf(i.range.second + i.offset, this.second + i.offset),
+    )
 
-fun Set<Pair<Long, Long>>.getMinimum() = this.minBy { it.first }.first
-
-// did not work for performance reasons
-fun Almanac2._locations2(): Set<Long> {
-    val locations = mutableSetOf<Long>()
-    for (pair in this.first) {
-        println("pair: $pair")
-        val seed = pair.first
-        println("seed: $seed")
-        for (i in 0 until pair.second) {
-            println("pair.first: ${pair.first}")
-            var number = seed + i
-            println("number: $number")
-            second.map { (_, instruction) ->
-                println(instruction.forEach { println("range: ${it.range.first} - ${it.range.second}") })
-                number += (instruction.find { it.range.first <= number && number <= it.range.second }?.offset ?: 0)
-                println("instruction: $instruction")
-                println("number: $number")
-            }
-            locations.plusAssign(number)
-            println("locations: $locations")
-        }
-    }
-    return locations.toSet()
-}
+fun Locations.getMinimum() = this.minBy { it.first }.first
