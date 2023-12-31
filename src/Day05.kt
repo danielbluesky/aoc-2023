@@ -22,17 +22,18 @@ fun main() {
     // test if implementation meets criteria from the description, like:
     // checkResult(part1(testInput1), 35)
     // checkResult(part1(input), 525792406)
-    // checkResult(part2(testInput2), 46)
+    checkResult(part2(testInput2), 46)
     checkResult(part2(input), 79004094)
 }
 
 typealias Input = List<List<String>>
 typealias Almanac = Pair<Set<Long>, Map<String, Set<Instruction>>>
 typealias Almanac2 = Pair<Set<Pair<Long, Long>>, Map<String, Set<Instruction>>>
+typealias Seed = Pair<Long, Long>
 
 data class Instruction(val range: Pair<Long, Long>, val offset: Long)
 
-// exercise 1
+// Exercise 1
 fun List<String>.prepare() = this
     .joinToString("\n")
     .split("\n\n")
@@ -71,8 +72,8 @@ fun Almanac.locations(): Set<Long> {
     return locations
 }
 
-// exercise 2
-fun Input.parse2() = parseSeeds2() to parseInstructions()
+// Exercise 2
+fun Input.parse2() = parseSeeds2() to parseInstructions2()
 
 fun Input.parseSeeds2() = this[0][0]
     .substringAfter(" ")
@@ -83,7 +84,34 @@ fun Input.parseSeeds2() = this[0][0]
     .sortedBy { it.first }
     .toSet()
 
-fun Almanac2.locations2(): Locations {
+fun Input.parseInstructions2() = this
+    .drop(1)
+    .associate { inputInstructions ->
+        val step = inputInstructions[0]
+        val instruction = inputInstructions
+            .drop(1)
+            .map { it.split(" ").map { it.toLong() } }
+            .map { it -> Instruction(it[1] to it[1] + it[2] - 1, it[0] - it[1]) }
+            .fill() // needed to make example work
+            .toSet()
+        step to instruction
+    }
+
+fun List<Instruction>.fill(): List<Instruction> {
+    val filledSet = mutableListOf<Instruction>()
+    var lowerBound: Long = 1
+    this.sortedBy { it.range.first }.forEach { instruction ->
+        if (instruction.range.first > lowerBound) {
+            filledSet += Instruction(Pair(lowerBound, instruction.range.first - 1), 0L)
+        }
+        filledSet += instruction
+        lowerBound = instruction.range.second + 1
+    }
+    filledSet += Instruction(Pair(lowerBound, Long.MAX_VALUE), 0L)
+    return filledSet.sortedBy { it.range.first }
+}
+
+fun Almanac2.locations2(): Set<Seed> {
     val toAdd = mutableSetOf<Seed>()
     val toRemove = mutableSetOf<Seed>()
     val newSeeds = mutableSetOf<Seed>()
@@ -121,14 +149,10 @@ fun Almanac2.locations2(): Locations {
     return newSeeds
 }
 
-typealias Seed = Pair<Long, Long>
-typealias Locations = Set<Pair<Long, Long>>
-
-fun Seed.offset(i: Instruction): Locations =
+fun Seed.offset(i: Instruction): Set<Seed> =
     setOf(
-        // if (this.first < i.range.first) this.first to i.range.first - 1 else 10000000000L to 10000000000L,
         maxOf(i.range.first + i.offset, this.first + i.offset) to
         minOf(i.range.second + i.offset, this.second + i.offset),
     )
 
-fun Locations.getMinimum() = this.minBy { it.first }.first
+fun Set<Seed>.getMinimum() = this.minBy { it.first }.first
