@@ -1,4 +1,5 @@
 // https://adventofcode.com/2023/day/4
+/*
 import kotlin.math.pow
 
 data class Deck(val currentInstances: Int, val myNumbers: Set<Int>, val benchmark: Set<Int>)
@@ -102,3 +103,4 @@ fun List<String>._parse2(): MutableMap<Int, Deck> {
     }
     return parsed
 }
+*/
