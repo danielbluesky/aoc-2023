@@ -4,14 +4,14 @@ fun main() {
     val testInput = readInput("Day07_test")
     val input = readInput("Day07")
 
-    fun part1(input: List<String>, jokerMode: Boolean) = input
+    fun part1(input: List<String>, jokerRule: Boolean) = input
         .parse()
-        .map { it -> it.evaluateHand(jokerMode) }
+        .map { it -> it.evaluateHand(jokerRule) }
         .sort()
         .winnings()
         .sumOf { it }
 
-    fun part2(input: List<String>, jokerMode: Boolean) = part1(input, jokerMode)
+    fun part2(input: List<String>, jokerRule: Boolean) = part1(input, jokerRule)
 
     // test if implementation meets criteria from the description, like:
     checkResult(part1(testInput, false), 6440)
@@ -20,21 +20,22 @@ fun main() {
     checkResult(part2(input, true), 248747492)
 }
 
+typealias Input = List<String>
 typealias Bid = Int
 typealias Hand = String
+typealias Card = Char
+typealias Count = Int
 typealias EvaluatedHands = List<Int>
 
-fun List<String>.parse(): List<Pair<Hand, Bid>> = this
+fun Input.parse(): List<Pair<Hand, Bid>> = this
     .map { it.substringBefore(" ") to it.substringAfter(" ").toInt() }
 
-fun Pair<Hand, Bid>.evaluateHand(jokerMode: Boolean): Pair<EvaluatedHands, Bid> =
-    mutableListOf(first.groupingBy { it }.eachCount().handValue(first.jokers(jokerMode))) + first.map { it.mapping(jokerMode) } to second
+fun Pair<Hand, Bid>.evaluateHand(jokerRule: Boolean): Pair<EvaluatedHands, Bid> =
+    mutableListOf(first.groupingBy { it }.eachCount().patternValue(first.jokers(jokerRule))) + first.map { it.cardValue(jokerRule) } to second
 
-fun Hand.jokers(jokerMode: Boolean) = if (jokerMode) this.count { it == 'J' } else 0
+fun Hand.jokers(jokerRule: Boolean) = if (jokerRule) this.count { it == 'J' } else 0
 
-fun Char.mapping(jokerMode: Boolean) = mapping[this]?.let { if (jokerMode && it == 11) 1 else it } ?: 0
-
-fun Map<Char, Int>.handValue(jokers: Int) = when (this.values.sortedDescending()) {
+fun Map<Card, Count>.patternValue(jokers: Int) = when (this.values.sortedDescending()) {
     listOf(5) -> 6 // five of a kind
     listOf(4, 1) -> { if (jokers == 0) 5 else 6 } // four of a kind
     listOf(3, 2) -> { if (jokers == 0) 4 else 6 } // full house
@@ -44,15 +45,16 @@ fun Map<Char, Int>.handValue(jokers: Int) = when (this.values.sortedDescending()
     else -> { if (jokers == 0) 0 else 1 } // high card
 }
 
-fun List<Pair<EvaluatedHands, Bid>>.sort(): List<Pair<EvaluatedHands, Bid>> = this
-    .sortedWith(
-        compareBy({ it.first[0] }, { it.first[1] }, { it.first[2] }, { it.first[3] }, { it.first[4] }, { it.first[5] }),
-    )
+fun Card.cardValue(jokerRule: Boolean) = cardValues[this]?.let { if (jokerRule && it == 11) 1 else it } ?: 0
+
+fun List<Pair<EvaluatedHands, Bid>>.sort(): List<Pair<EvaluatedHands, Bid>> = this.sortedWith(
+    compareBy({ it.first[0] }, { it.first[1] }, { it.first[2] }, { it.first[3] }, { it.first[4] }, { it.first[5] }),
+)
 
 fun List<Pair<EvaluatedHands, Bid>>.winnings() = this
     .mapIndexed { index, pair -> pair.second * (index + 1) }
 
-val mapping = mapOf(
+val cardValues = mapOf(
     'A' to 14,
     'K' to 13,
     'Q' to 12,
