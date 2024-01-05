@@ -10,13 +10,16 @@ fun main() {
         .let { it.second.navigate(it.first) }
 
     fun part2(input: List<String>) = input
-        .size
+        .parse()
+        .let { it.second.navigate2(it.first) }
+        .lcm()
+        .toString()
 
     // test if implementation meets criteria from the description, like:
     checkResult(part1(testInput1), 6)
     checkResult(part1(input), 17873)
-    // checkResult(part2(testInput2), 6)
-    // checkResult(part2(input), 0)
+    checkResult(part2(testInput2), "6")
+    checkResult(part2(input), "15746133679061")
 }
 
 typealias Input = List<String>
@@ -33,14 +36,55 @@ fun Input.parseNodes(): Map<Departure, Destinations> = this.associate { input ->
     departure to destinations.removeSurrounding("(", ")").split(", ").let { it[0] to it[1] }
 }
 
+// Exercise 1
 fun Map<Departure, Destinations>.navigate(guide: Guide): Int {
     var directions = guide
-    var current = "AAA"
+    var position = "AAA"
     var step = 0
-    while (current != final) {
-        current = if (directions.first() == 'L') this[current]!!.first else this[current]!!.second
+    while (position != final) {
+        position = if (directions.first() == 'L') this[position]!!.first else this[position]!!.second
         directions = directions.drop(1) + directions.first()
         step++
     }
     return step
 }
+
+// Exercise 2
+fun Map<Departure, Destinations>.departures() = keys.filter { it -> it.last() == 'A' }
+
+fun Map<Departure, Destinations>.navigate2(guide: Guide): List<Long> {
+    var directions = guide
+    val steps = mutableListOf<Long>()
+    departures().map { it ->
+        var step = 0
+        var position = it
+        while (position.last() != 'Z') {
+            position = if (directions.first() == 'L') this[position]!!.first else this[position]!!.second
+            directions = directions.drop(1) + directions.first()
+            step++
+        }
+        steps += step.toLong()
+    }
+    return steps
+}
+
+// Lowest common multiple
+fun List<Long>.lcm(): Long = fold(1L) { acc, i -> (acc * i) / gcd(acc, i) }
+
+// Greatest common divisor
+fun gcd(a: Long, b: Long): Long = if (b == 0L) a else gcd(b, a % b)
+
+// This works on example data, but it seems to take very long on the real data set
+fun Map<Departure, Destinations>._navigate2(guide: Guide): Int {
+    var directions = guide
+    var positions = departures()
+    var step = 0
+    while (positions.finalDestinations().not()) {
+        positions = positions.map { it -> if (directions.first() == 'L') this[it]!!.first else this[it]!!.second }
+        directions = directions.drop(1) + directions.first()
+        step++
+    }
+    return step
+}
+
+fun List<Departure>.finalDestinations() = filter { it -> it.last() == 'Z' }.size == size
