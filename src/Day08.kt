@@ -2,7 +2,7 @@
 
 fun main() {
     val testInput1 = readInput("Day08_test_1")
-    val testInput2 = readInput("Day08_test_1")
+    val testInput2 = readInput("Day08_test_2")
     val input = readInput("Day08")
 
     fun part1(input: List<String>) = input
@@ -15,25 +15,25 @@ fun main() {
     // test if implementation meets criteria from the description, like:
     checkResult(part1(testInput1), 6)
     checkResult(part1(input), 17873)
-    // checkResult(part2(testInput2), 0)
+    // checkResult(part2(testInput2), 6)
     // checkResult(part2(input), 0)
 }
 
 typealias Input = List<String>
 typealias Guide = String
-typealias Start = String
+typealias Departure = String
 typealias Destinations = Pair<String, String>
 
 const val final = "ZZZ"
 
-fun Input.parse(): Pair<Guide, Map<Start, Destinations>> = this[0] to this.drop(2).parseInstructions()
+fun Input.parse(): Pair<Guide, Map<Departure, Destinations>> = this[0] to this.drop(2).parseNodes()
 
-fun Input.parseInstructions(): Map<Start, Destinations> = this.associate { input ->
-    val (start, destinations) = input.split(" = ")
-    start to destinations.removeSurrounding("(", ")").split(", ").let { it[0] to it[1] }
+fun Input.parseNodes(): Map<Departure, Destinations> = this.associate { input ->
+    val (departure, destinations) = input.split(" = ")
+    departure to destinations.removeSurrounding("(", ")").split(", ").let { it[0] to it[1] }
 }
 
-fun Map<Start, Destinations>.navigate(guide: Guide): Int {
+fun Map<Departure, Destinations>.navigate(guide: Guide): Int {
     var directions = guide
     var current = "AAA"
     var step = 0
