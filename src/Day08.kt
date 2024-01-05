@@ -52,6 +52,13 @@ fun Map<Departure, Destinations>.navigate(guide: Guide): Int {
 // Exercise 2
 fun Map<Departure, Destinations>.departures() = keys.filter { it -> it.last() == 'A' }
 
+/**
+- When you do not exit the loop once you have reached a destination ending with 'Z', but continue looping over the
+  instructions, you will see that this same 'Z'-destination is reached again and again, and it always takes the same
+  number of steps to re-reach the 'Z'-destination.
+- Therefore, it is possible to count the steps it takes to reach the six final destinations for the first time, and
+  to calculate the lowest common multiple of the six results.
+*/
 fun Map<Departure, Destinations>.navigate2(guide: Guide): List<Long> {
     var directions = guide
     val steps = mutableListOf<Long>()
@@ -65,6 +72,7 @@ fun Map<Departure, Destinations>.navigate2(guide: Guide): List<Long> {
         }
         steps += step.toLong()
     }
+    // println("Results: $steps")
     return steps
 }
 
@@ -74,7 +82,9 @@ fun List<Long>.lcm(): Long = fold(1L) { acc, i -> (acc * i) / gcd(acc, i) }
 // Greatest common divisor
 fun gcd(a: Long, b: Long): Long = if (b == 0L) a else gcd(b, a % b)
 
-// This works on example data, but it seems to take very long on the real data set
+/**
+- This solution worked on the small set of example data, but it seems to take very long on the real data set.
+*/
 fun Map<Departure, Destinations>._navigate2(guide: Guide): Int {
     var directions = guide
     var positions = departures()
