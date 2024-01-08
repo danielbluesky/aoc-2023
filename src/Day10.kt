@@ -5,13 +5,13 @@ fun main() {
     val testInput2 = readInput("Day10_test_1")
     val input = readInput("Day10")
 
-    fun part1(input: List<String>): Int {
-        input
+    fun part1(input: List<String>) = input
             .parse()
             .let {
-                it.navigate(it.goToStart(), it.overridePipe(it.goToStart())) / 2
+                val start = it.goToStart()
+                val pipe = it.startingPipe(start)
+                it.navigate(start, pipe, pipe.startingDirection()) / 2
             }
-    }
 
     fun part2(input: List<String>) = input
         .size
@@ -49,15 +49,16 @@ fun Input.parse() = this
 fun Map<Coords, Char>.goToStart() = filterValues { it == 'S' }.keys.first()
 
 /**
- * This function substitutes the start symbol (S) by the correct pipe symbol
+ * This function substitutes the start symbol (S) by the correct pipe symbol, based on the adjacent pipes,
+ * in order to feed it to the navigate function
  */
-fun Map<Coords, Char>.overridePipe(s: Coords): Pair<Char, Direction> {
-    return if (this[s.copy(y = s.y + 1)] in goNorth && this[s.copy(x = s.x + 1)] in goEast) { 'L' to Direction.NORTH } else {
-        if (this[s.copy(y = s.y + 1)] in goNorth && this[s.copy(y = s.y - 1)] in goSouth) { '|' to Direction.NORTH } else {
-            if (this[s.copy(y = s.y + 1)] in goNorth && this[s.copy(x = s.x - 1)] in goWest) { 'J' to Direction.NORTH } else {
-                if (this[s.copy(x = s.x + 1)] in goEast && this[s.copy(y = s.y - 1)] in goSouth) { 'F' to Direction.EAST } else {
-                    if (this[s.copy(x = s.x + 1)] in goEast && this[s.copy(x = s.x - 1)] in goWest) { '-' to Direction.EAST } else {
-                        if (this[s.copy(y = s.y - 1)] in goSouth && this[s.copy(x = s.x - 1)] in goWest) { '7' to Direction.SOUTH } else {
+fun Map<Coords, Char>.startingPipe(s: Coords) =
+     if (this[s.copy(y = s.y + 1)] in goNorth && this[s.copy(x = s.x + 1)] in goEast) { 'L' } else {
+        if (this[s.copy(y = s.y + 1)] in goNorth && this[s.copy(y = s.y - 1)] in goSouth) { '|' } else {
+            if (this[s.copy(y = s.y + 1)] in goNorth && this[s.copy(x = s.x - 1)] in goWest) { 'J' } else {
+                if (this[s.copy(x = s.x + 1)] in goEast && this[s.copy(y = s.y - 1)] in goSouth) { 'F' } else {
+                    if (this[s.copy(x = s.x + 1)] in goEast && this[s.copy(x = s.x - 1)] in goWest) { '-' } else {
+                        if (this[s.copy(y = s.y - 1)] in goSouth && this[s.copy(x = s.x - 1)] in goWest) { '7' } else {
                             throw IllegalArgumentException("Invalid character")
                         }
                     }
@@ -65,70 +66,67 @@ fun Map<Coords, Char>.overridePipe(s: Coords): Pair<Char, Direction> {
             }
         }
     }
+
+/**
+ * This function returns the (theoretical) incoming direction to derive the direction at the start from
+ */
+fun Char.startingDirection() = when {
+    setOf('L', '|', 'J').contains(this) -> Direction.NORTH
+    setOf('F', '-').contains(this) -> Direction.EAST
+    setOf('7').contains(this) -> Direction.SOUTH
+    else -> throw IllegalArgumentException("Invalid character")
 }
 
 /**
- * This function navigates through the grid
+ * This function navigates through the grid and counts the moves
  */
-fun Map<Coords, Char>.navigate(start: Coords, override: Pair<Char, Direction>) =
-    generateSequence(Triple(start, override.first, override.second)) { (current, pipe, direction) ->
+fun Map<Coords, Char>.navigate(start: Coords, pipe: Char, direction: Direction) =
+    generateSequence(Triple(start, pipe, direction)) { (current, pipe, direction) ->
         val move = pipe.nextMove(direction)
         Triple(
-            Coords(current.x + move.first.x, current.y + move.first.y),
-            this[Coords(current.x + move.first.x, current.y + move.first.y)]!!,
-            move.second,
+            Coords(current.x + move.x, current.y + move.y),
+            this[Coords(current.x + move.x, current.y + move.y)]!!,
+            move.incomingDirection(),
         )
-    }
-        .takeWhile { it.second != 'S' }
-        .count()
+    }.takeWhile { it.second != 'S' }.count()
 
 /**
- * This function returns the next move and the direction we are coming from
+ * This function returns the next move
  */
-fun Char.nextMove(from: Direction): Pair<Move, Direction> {
-    return when (from) {
-        Direction.NORTH -> when (this) {
-            'J' -> Move(-1, 0) to Direction.EAST
-            '|' -> Move(0, -1) to Direction.NORTH
-            'L' -> Move(1, -0) to Direction.WEST
-            else -> throw IllegalArgumentException("Invalid character")
-        }
-        Direction.EAST -> when (this) {
-            'L' -> Move(0, 1) to Direction.SOUTH
-            '-' -> Move(-1, -0) to Direction.EAST
-            'F' -> Move(0, -1) to Direction.NORTH
-            else -> throw IllegalArgumentException("Invalid character")
-        }
-        Direction.SOUTH -> when (this) {
-            '7' -> Move(-1, 0) to Direction.EAST
-            '|' -> Move(0, 1) to Direction.SOUTH
-            'F' -> Move(1, 0) to Direction.WEST
-            else -> throw IllegalArgumentException("Invalid character")
-        }
-        Direction.WEST -> when (this) {
-            'J' -> Move(0, 1) to Direction.SOUTH
-            '-' -> Move(1, 0) to Direction.WEST
-            '7' -> Move(0, -1) to Direction.NORTH
-            else -> throw IllegalArgumentException("Invalid character")
-        }
+fun Char.nextMove(from: Direction) = when (from) {
+    Direction.NORTH -> when (this) {
+        'J' -> Move(-1, 0)
+        '|' -> Move(0, -1)
+        'L' -> Move(1, 0)
+        else -> throw IllegalArgumentException("Invalid character")
+    }
+    Direction.EAST -> when (this) {
+        'L' -> Move(0, 1)
+        '-' -> Move(-1, 0)
+        'F' -> Move(0, -1)
+        else -> throw IllegalArgumentException("Invalid character")
+    }
+    Direction.SOUTH -> when (this) {
+        '7' -> Move(-1, 0)
+        '|' -> Move(0, 1)
+        'F' -> Move(1, 0)
+        else -> throw IllegalArgumentException("Invalid character")
+    }
+    Direction.WEST -> when (this) {
+        'J' -> Move(0, 1)
+        '-' -> Move(1, 0)
+        '7' -> Move(0, -1)
+        else -> throw IllegalArgumentException("Invalid character")
     }
 }
 
 /**
- * This is the initial version of the navigate function
+ * This function returns the incoming direction from the (next) move's coordinates
  */
-fun Map<Coords, Char>._navigate(start: Coords, initialSubstitute: Char, initialDirection: Direction): Int {
-    var pipe = initialSubstitute
-    var direction = initialDirection
-    var current = start
-    var count = 0
-
-    while (pipe != 'S') {
-        val move = pipe.nextMove(direction).first
-        current = Coords(current.x + move.x, current.y + move.y)
-        direction = pipe.nextMove(direction).second
-        pipe = this[current]!!
-        count += 1
-    }
-    return count
+fun Move.incomingDirection() = when (this) {
+    Move(0, -1) -> Direction.NORTH
+    Move(0, 1) -> Direction.SOUTH
+    Move(-1, 0) -> Direction.EAST
+    Move(1, 0) -> Direction.WEST
+    else -> throw IllegalArgumentException("Invalid coordinates")
 }
